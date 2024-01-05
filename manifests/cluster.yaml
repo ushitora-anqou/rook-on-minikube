@@ -1,0 +1,84 @@
+apiVersion: ceph.rook.io/v1
+kind: CephCluster
+metadata:
+  name: rook-ceph
+  namespace: rook-ceph
+spec:
+  dataDirHostPath: /var/lib/rook
+  mon:
+    count: 1
+    allowMultiplePerNode: false
+    volumeClaimTemplate:
+      spec:
+        storageClassName: topolvm-provisioner
+        resources:
+          requests:
+            storage: 1Gi
+  cephVersion:
+    image: quay.io/ceph/ceph:v17.2.6
+    allowUnsupported: true
+  skipUpgradeChecks: false
+  continueUpgradeAfterChecksEvenIfNotHealthy: false
+  dashboard:
+    enabled: false
+  network:
+    hostNetwork: false
+  crashCollector:
+    disable: true
+  storage:
+    storageClassDeviceSets:
+      - name: set1
+        count: 6
+        portable: false
+        placement:
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: ScheduleAnyway
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - rook-ceph-osd
+        preparePlacement:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - rook-ceph-osd
+                      - key: app
+                        operator: In
+                        values:
+                          - rook-ceph-osd-prepare
+                  topologyKey: kubernetes.io/hostname
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: DoNotSchedule
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - rook-ceph-osd-prepare
+        volumeClaimTemplates:
+          - metadata:
+              name: data
+            spec:
+              resources:
+                requests:
+                  storage: 1Gi
+              storageClassName: topolvm-provisioner
+              volumeMode: Block
+              accessModes:
+                - ReadWriteOnce
+  disruptionManagement:
+    managePodBudgets: true
+    osdMaintenanceTimeout: 30
+    pgHealthCheckTimeout: 0
