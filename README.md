@@ -110,7 +110,7 @@ $ kubectl exec -n rook-ceph deploy/rook-ceph-tools -- ceph osd df
 ID  CLASS  WEIGHT   REWEIGHT  SIZE   RAW USE  DATA     OMAP     META     AVAIL     %USE  VAR   PGS  STATUS
  4    ssd  0.00099   1.00000  1 GiB  9.7 MiB  1.0 MiB      0 B  8.7 MiB  1014 MiB  0.95  0.88   49      up
  5    ssd  0.00099   1.00000  1 GiB   10 MiB  1.4 MiB      0 B  8.9 MiB  1014 MiB  1.01  0.93   40      up
- 1    ssd        0   1.00000  1 GiB  6.7 MiB  956 KiB    1 KiB  5.7 MiB  1017 MiB  0.65  0.60    0      up
+ 1    ssd        0   1.00000  1 GiB  6.7 MiB  956 KiB    1 KiB  5.7 MiB  1017 MiB  0.65  0.60    0      up # <--------------- PGS == 0
  3    ssd  0.00099   1.00000  1 GiB   15 MiB  1.6 MiB      0 B   13 MiB  1009 MiB  1.45  1.34   89      up
  0    ssd  0.00099   1.00000  1 GiB   15 MiB  1.1 MiB      0 B   14 MiB  1009 MiB  1.44  1.33   44      up
  2    ssd  0.00099   1.00000  1 GiB   10 MiB  1.4 MiB      0 B  8.6 MiB  1014 MiB  0.98  0.91   45      up
@@ -121,17 +121,17 @@ MIN/MAX VAR: 0.60/1.34  STDDEV: 0.28
 Cordon the node and delete the pod:
 ```
 $ kubectl cordon minikube-m02
-$ kubectl delete pod -n rook-ceph rook-ceph-osd-1-dfb8dfc98-84c79
+$ kubectl delete pod -n rook-ceph rook-ceph-osd-1-dfb8dfc98-xxsp4
 ```
 
 Check the result:
 ```
 $ kubectl -n rook-ceph logs rook-ceph-operator-6644798f58-bj8t4 -f
-2024-02-02 01:08:24.144809 I | clusterdisruption-controller: osd "rook-ceph-osd-1" is down and a possible node drain is detected
-2024-02-02 01:08:24.572444 I | clusterdisruption-controller: osd is down in failure domain "minikube-m02". pg health: "all PGs in cluster are clean"
-2024-02-02 01:08:26.209189 I | clusterdisruption-controller: creating temporary blocking pdb "rook-ceph-osd-host-minikube" with maxUnavailable=0 for "host" failure domain "minikube"
-2024-02-02 01:08:26.217016 I | clusterdisruption-controller: creating temporary blocking pdb "rook-ceph-osd-host-minikube-m03" with maxUnavailable=0 for "host" failure domain "minikube-m03"
-2024-02-02 01:08:26.221089 I | clusterdisruption-controller: deleting the default pdb "rook-ceph-osd" with maxUnavailable=1 for all osd
+2024-02-02 01:11:20.170147 I | clusterdisruption-controller: osd "rook-ceph-osd-1" is down and a possible node drain is detected
+2024-02-02 01:11:20.615101 I | clusterdisruption-controller: osd is down in failure domain "minikube-m02". pg health: "all PGs in cluster are clean"
+2024-02-02 01:11:22.284086 I | clusterdisruption-controller: creating temporary blocking pdb "rook-ceph-osd-host-minikube" with maxUnavailable=0 for "host" failure domain "minikube"
+2024-02-02 01:11:22.292043 I | clusterdisruption-controller: creating temporary blocking pdb "rook-ceph-osd-host-minikube-m03" with maxUnavailable=0 for "host" failure domain "minikube-m03"
+2024-02-02 01:11:22.296280 I | clusterdisruption-controller: deleting the default pdb "rook-ceph-osd" with maxUnavailable=1 for all osd
 
 $ kubectl get pdb -n rook-ceph ### <----------- The PDBs are correctly set.
 NAME                              MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
