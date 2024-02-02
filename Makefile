@@ -30,7 +30,18 @@ minikube/setup-lvm:
 	minikube ssh -n minikube -- sudo truncate --size=20G backing_store
 	minikube ssh -n minikube -- sudo losetup -f backing_store
 	minikube ssh -n minikube -- sudo vgcreate myvg1 $$(minikube ssh -n minikube -- sudo losetup -j backing_store | cut -d':' -f1)
-	minikube ssh -n minikube -- sudo lvcreate -T -n pool0 -L 4G myvg1
+	minikube ssh -n minikube-m02 -- sudo truncate --size=20G backing_store
+	minikube ssh -n minikube-m02 -- sudo losetup -f backing_store
+	minikube ssh -n minikube-m02 -- sudo vgcreate myvg1 $$(minikube ssh -n minikube-m02 -- sudo losetup -j backing_store | cut -d':' -f1)
+	minikube ssh -n minikube-m03 -- sudo truncate --size=20G backing_store
+	minikube ssh -n minikube-m03 -- sudo losetup -f backing_store
+	minikube ssh -n minikube-m03 -- sudo vgcreate myvg1 $$(minikube ssh -n minikube-m03 -- sudo losetup -j backing_store | cut -d':' -f1)
+
+.PHONY: minikube/setup-lvm2
+minikube/setup-lvm2:
+	minikube ssh -n minikube -- sudo truncate --size=20G /mnt/host/backing_store
+	minikube ssh -n minikube -- sudo losetup -f /mnt/host/backing_store
+	minikube ssh -n minikube -- sudo vgcreate myvg1 $$(minikube ssh -n minikube -- sudo losetup -j /mnt/host/backing_store | cut -d':' -f1)
 	minikube ssh -n minikube-m02 -- sudo truncate --size=20G backing_store
 	minikube ssh -n minikube-m02 -- sudo losetup -f backing_store
 	minikube ssh -n minikube-m02 -- sudo vgcreate myvg1 $$(minikube ssh -n minikube-m02 -- sudo losetup -j backing_store | cut -d':' -f1)

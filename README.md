@@ -141,10 +141,58 @@ rook-ceph-osd-host-minikube-m03   N/A             0                 0           
 
 ## Additional Investigation
 
+### Case 1: when the disk backing an OSD is removed
+
+After running `make minikube/start`, I ran `minikube mount $PWD/node1:/mnt/host`
+and then ran `make minikube/setup-lvm2` instead of `make minikube/setup-lvm` to
+use the mounted host directory (`$PWD/node1`) as a backing store of TopoLVM.
+
+The rest of the procedures were the same as before. The cluster was correctly deployed:
+
+```
+$ kubectl exec -n rook-ceph -it deploy/rook-ceph-tools -- ceph osd tree
+ID  CLASS  WEIGHT   TYPE NAME              STATUS  REWEIGHT  PRI-AFF
+-1         0.00595  root default                                    
+-7         0.00198      host minikube                               
+ 4    ssd  0.00099          osd.4              up   1.00000  1.00000
+ 5    ssd  0.00099          osd.5              up   1.00000  1.00000
+-5         0.00198      host minikube-m02                           
+ 2    ssd  0.00099          osd.2              up   1.00000  1.00000
+ 3    ssd  0.00099          osd.3              up   1.00000  1.00000
+-3         0.00198      host minikube-m03                           
+ 0    ssd  0.00099          osd.0              up   1.00000  1.00000
+ 1    ssd  0.00099          osd.1              up   1.00000  1.00000
+
+$ kubectl get -n rook-ceph pdb
+NAME            MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
+rook-ceph-osd   N/A             1                 1                     3m45s
+```
+
+Here, I exited the process of `minikube mount`, and the PVs for the OSD 4 and 5 were destroyed.
+Then, the blocking PDBs are successfully created:
+
+```
+❯ kubectl get pdb -n rook-ceph
+NAME                              MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
+rook-ceph-osd-host-minikube-m02   N/A             0                 0                     11s
+rook-ceph-osd-host-minikube-m03   N/A             0                 0                     11s
+
+$ kubectl logs -n rook-ceph -f rook-ceph-operator-6644798f58-29bfn
+2024-02-02 07:58:33.353420 I | clusterdisruption-controller: reconciling osd pdb reconciler as the allowed disruptions in default pdb is 0
+2024-02-02 07:58:33.355028 I | clusterdisruption-controller: osd "rook-ceph-osd-4" is down but no node drain is detected
+2024-02-02 07:58:33.355227 I | clusterdisruption-controller: osd "rook-ceph-osd-5" is down but no node drain is detected
+2024-02-02 07:58:33.788217 I | clusterdisruption-controller: osd is down in failure domain "minikube". pg health: "all PGs in cluster are clean"
+2024-02-02 07:58:33.791215 I | clusterdisruption-controller: creating temporary blocking pdb "rook-ceph-osd-host-minikube-m02" with maxUnavailable=0 for "host" failure domain "minikube-m02"
+2024-02-02 07:58:33.798878 I | clusterdisruption-controller: creating temporary blocking pdb "rook-ceph-osd-host-minikube-m03" with maxUnavailable=0 for "host" failure domain "minikube-m03"
+2024-02-02 07:58:33.804351 I | clusterdisruption-controller: deleting the default pdb "rook-ceph-osd" with maxUnavailable=1 for all osd
+2024-02-02 07:59:03.354319 I | clusterdisruption-controller: osd "rook-ceph-osd-5" is down but no node drain is detected
+2024-02-02 07:59:03.354475 I | clusterdisruption-controller: osd "rook-ceph-osd-4" is down but no node drain is detected
+2024-02-02 07:59:03.786815 I | clusterdisruption-controller: osd is down in failure domain "minikube". pg health: "cluster is not fully clean. PGs: [{StateName:active+undersized Count:64} {StateName:active+undersized+degraded Count:25}]"
+```
+
 ### Case 2: when an OSD deployment is removed
 
-The result: the blocking PDBs are correctly set.
-
+The cluster was deployed normally (with `make minikube/setup-lvm`):
 ```
 $ kubectl get pdb -n rook-ceph
 NAME            MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
@@ -178,7 +226,10 @@ ID  CLASS  WEIGHT   TYPE NAME              STATUS  REWEIGHT  PRI-AFF
 -3         0.00198      host minikube-m03                           
  0    ssd  0.00099          osd.0              up   1.00000  1.00000
  1    ssd  0.00099          osd.1              up   1.00000  1.00000
+```
 
+Here, I removed the deployment for the OSD 0. Then, the blocking PDBs are successfully created: 
+```
 $ kubectl delete deploy -n rook-ceph rook-ceph-osd-0
 deployment.apps "rook-ceph-osd-0" deleted
 
