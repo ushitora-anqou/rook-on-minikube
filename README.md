@@ -228,7 +228,7 @@ ID  CLASS  WEIGHT   TYPE NAME              STATUS  REWEIGHT  PRI-AFF
  1    ssd  0.00099          osd.1              up   1.00000  1.00000
 ```
 
-Here, I removed the deployment for the OSD 0. Then, the blocking PDBs are successfully created: 
+Here, I removed the deployment for the OSD 0. Then, the blocking PDBs were successfully created: 
 ```
 $ kubectl delete deploy -n rook-ceph rook-ceph-osd-0
 deployment.apps "rook-ceph-osd-0" deleted
