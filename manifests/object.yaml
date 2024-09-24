@@ -14,10 +14,10 @@ spec:
   metadataPool:
     failureDomain: host
     replicated:
-      size: 3
+      size: 1
       # Disallow setting pool with replica 1, this could lead to data loss without recovery.
       # Make sure you're *ABSOLUTELY CERTAIN* that is what you want
-      requireSafeReplicaSize: true
+      requireSafeReplicaSize: false
     parameters:
       # Inline compression mode for the data pool
       # Further reference: https://docs.ceph.com/docs/master/rados/configuration/bluestore-config-ref/#inline-compression
@@ -29,10 +29,10 @@ spec:
   dataPool:
     failureDomain: host
     replicated:
-      size: 3
+      size: 1
       # Disallow setting pool with replica 1, this could lead to data loss without recovery.
       # Make sure you're *ABSOLUTELY CERTAIN* that is what you want
-      requireSafeReplicaSize: true
+      requireSafeReplicaSize: false
     parameters:
       # Inline compression mode for the data pool
       # Further reference: https://docs.ceph.com/docs/master/rados/configuration/bluestore-config-ref/#inline-compression
@@ -94,12 +94,19 @@ spec:
     resources:
     # The requests and limits set here, allow the object store gateway Pod(s) to use half of one CPU core and 1 gigabyte of memory
     #  limits:
-    #    cpu: "500m"
     #    memory: "1024Mi"
     #  requests:
     #    cpu: "500m"
     #    memory: "1024Mi"
     priorityClassName: system-cluster-critical
+    # # Add arbitrary volume mounts to RGW pods
+    # additionalVolumeMounts:
+    #   # 'rgw-ldap' secret keys will show up as files in RGW container in dir /var/rgw/ldap
+    #   - subPath: ldap
+    #     volumeSource:
+    #       secret:
+    #         secretName: rgw-ldap
+    #         defaultMode: 0600
   #zone:
   #name: zone-a
   # service endpoint healthcheck
@@ -109,6 +116,11 @@ spec:
       disabled: false
     readinessProbe:
       disabled: false
+  # hosting:
+  #   The list of subdomain names for virtual hosting of buckets.
+  #   dnsNames:
+  #     - "mystore.example.com"
+
   # If a CephObjectStoreUser is created in a namespace other than the Rook cluster namespace,
   # the namespace must be added to the list of allowed namespaces, or specify "*" to allow all namespaces.
   # allowUsersInNamespaces:

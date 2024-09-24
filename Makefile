@@ -19,7 +19,7 @@ help: ## Display this help.
 
 .PHONY: minikube/start
 minikube/start:
-	minikube start --driver=kvm2 --nodes 3 --cpus 4 --memory 8g --disk-size=30g
+	minikube start --driver=kvm2 --nodes 1 --cpus 4 --memory 8g --disk-size=30g
 
 .PHONY: minikube/stop
 minikube/stop:
@@ -30,24 +30,6 @@ minikube/setup-lvm:
 	minikube ssh -n minikube -- sudo truncate --size=20G backing_store
 	minikube ssh -n minikube -- sudo losetup -f backing_store
 	minikube ssh -n minikube -- sudo vgcreate myvg1 $$(minikube ssh -n minikube -- sudo losetup -j backing_store | cut -d':' -f1)
-	minikube ssh -n minikube-m02 -- sudo truncate --size=20G backing_store
-	minikube ssh -n minikube-m02 -- sudo losetup -f backing_store
-	minikube ssh -n minikube-m02 -- sudo vgcreate myvg1 $$(minikube ssh -n minikube-m02 -- sudo losetup -j backing_store | cut -d':' -f1)
-	minikube ssh -n minikube-m03 -- sudo truncate --size=20G backing_store
-	minikube ssh -n minikube-m03 -- sudo losetup -f backing_store
-	minikube ssh -n minikube-m03 -- sudo vgcreate myvg1 $$(minikube ssh -n minikube-m03 -- sudo losetup -j backing_store | cut -d':' -f1)
-
-.PHONY: minikube/setup-lvm2
-minikube/setup-lvm2:
-	minikube ssh -n minikube -- sudo truncate --size=20G /mnt/host/backing_store
-	minikube ssh -n minikube -- sudo losetup -f /mnt/host/backing_store
-	minikube ssh -n minikube -- sudo vgcreate myvg1 $$(minikube ssh -n minikube -- sudo losetup -j /mnt/host/backing_store | cut -d':' -f1)
-	minikube ssh -n minikube-m02 -- sudo truncate --size=20G backing_store
-	minikube ssh -n minikube-m02 -- sudo losetup -f backing_store
-	minikube ssh -n minikube-m02 -- sudo vgcreate myvg1 $$(minikube ssh -n minikube-m02 -- sudo losetup -j backing_store | cut -d':' -f1)
-	minikube ssh -n minikube-m03 -- sudo truncate --size=20G backing_store
-	minikube ssh -n minikube-m03 -- sudo losetup -f backing_store
-	minikube ssh -n minikube-m03 -- sudo vgcreate myvg1 $$(minikube ssh -n minikube-m03 -- sudo losetup -j backing_store | cut -d':' -f1)
 
 ##@ TopoLVM
 
@@ -65,16 +47,16 @@ topolvm/deploy:
 
 .PHONY: rook/deploy-cluster
 rook/deploy-cluster:
-	$(KUBECTL) apply -f manifests/common.yaml
-	$(KUBECTL) apply -f manifests/crds.yaml
-	$(KUBECTL) apply -f manifests/operator.yaml
+	$(KUBECTL) apply -f rook/deploy/examples/common.yaml
+	$(KUBECTL) apply -f rook/deploy/examples/crds.yaml
+	$(KUBECTL) apply -f rook/deploy/examples/operator.yaml
 	$(KUBECTL) apply -f manifests/cluster.yaml
-	$(KUBECTL) apply -f manifests/toolbox.yaml
+	$(KUBECTL) apply -f rook/deploy/examples/toolbox.yaml
 	$(KUBECTL) get pod -n rook-ceph -w
 
 .PHONY: rook/deploy-ceph-object-store
 rook/deploy-ceph-object-store:
-	$(KUBECTL) apply -f manifests/object.yaml
+	$(KUBECTL) apply -f rook/deploy/examples/object.yaml
 	$(KUBECTL) get pod -n rook-ceph -w
 
 .PHONY: rook/load-dev-image
