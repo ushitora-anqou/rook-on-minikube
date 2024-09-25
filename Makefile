@@ -56,7 +56,7 @@ rook/deploy-cluster:
 
 .PHONY: rook/deploy-ceph-object-store
 rook/deploy-ceph-object-store:
-	$(KUBECTL) apply -f rook/deploy/examples/object.yaml
+	$(KUBECTL) apply -f manifests/object.yaml
 	$(KUBECTL) get pod -n rook-ceph -w
 
 .PHONY: rook/load-dev-image
