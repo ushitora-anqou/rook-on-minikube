@@ -30,8 +30,10 @@ Set `rgw_enable_usage_log` to `false` manually so that we can check if the setti
 ```
 $ minikube kubectl -- exec -it -n rook-ceph deploy/rook-ceph-tools -- ceph config set client.rgw.my.store.a rgw_enable_usage_log false
 
-$ minikube kubectl -- exec -it -n rook-ceph deploy/rook-ceph-tools -- ceph config dump | grep rgw_enable_usage_log
-client.rgw.my.store.a        advanced  rgw_enable_usage_log                   false           
+$ GID=$(minikube kubectl -- exec -it -n rook-ceph deploy/rook-ceph-tools -- ceph service dump -f json | jq '.services.rgw.daemons[] | select(type=="object" and .metadata.id == "my.store.a") | .gid')
+
+$ minikube kubectl -- exec -it -n rook-ceph deploy/rook-ceph-tools -- ceph config show rgw.$GID | grep usage_log
+rgw_enable_usage_log        false
 ```
 
 Deploy a new rook-config-override ConfigMap which sets `rgw_enable_usage_log` to `false`.
@@ -71,6 +73,6 @@ deployment.apps/rook-ceph-operator restarted
 
 $ sleep 120
 
-$ minikube kubectl -- exec -it -n rook-ceph deploy/rook-ceph-tools -- ceph config dump | grep rgw_enable_usage_log
-client.rgw.my.store.a        advanced  rgw_enable_usage_log                   true            
+$ minikube kubectl -- exec -it -n rook-ceph deploy/rook-ceph-tools -- ceph config show rgw.$GID | grep usage_log
+rgw_enable_usage_log        true                                           mon                                          
 ```
