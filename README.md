@@ -7,72 +7,33 @@
 - RAM: >= 32 GiB
 - Disk: >= 100 GiB free
 
-## Check that `rgw_enable_usage_log` in `rook-ceph-config` has no effect
-
-Deploy Minikube, TopoLVM, Rook, and RGW.
+## Check that PDBs blocking all hosts can be created under some circumstances
 
 ```
-$ git clone https://github.com/ushitora-anqou/rook-on-minikube.git
-$ cd rook-on-minikube
-$ git checkout rook-14737
-$ git submodule update --init --recursive
 $ make minikube/start
 $ make minikube/setup-lvm
 $ make topolvm/deploy
-$ make -C rook build
-$ make rook/load-dev-image IMAGE=build-36a6140b/ceph-amd64 # <--------- The image name will be different in your environment
 $ make rook/deploy-cluster
 $ make rook/deploy-ceph-object-store
 ```
 
-Set `rgw_enable_usage_log` to `false` manually so that we can check if the setting persists.
-
 ```
-$ minikube kubectl -- exec -it -n rook-ceph deploy/rook-ceph-tools -- ceph config set client.rgw.my.store.a rgw_enable_usage_log false
+$ kubectl drain --ignore-daemonsets --delete-emptydir-data minikube-m02
+$ kubectl cordon minikube-m03
+$ kubectl delete -n rook-ceph pod rook-ceph-osd-4-64dbc84dd9-x8rgp
 
-$ GID=$(minikube kubectl -- exec -it -n rook-ceph deploy/rook-ceph-tools -- ceph service dump -f json | jq '.services.rgw.daemons[] | select(type=="object" and .metadata.id == "my.store.a") | .gid')
+$ kubectl get pdb -n rook-ceph
+NAME                              MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
+rook-ceph-mon-pdb                 N/A             1                 0                     13m
+rook-ceph-osd-host-minikube       N/A             0                 0                     94s
+rook-ceph-osd-host-minikube-m03   N/A             0                 0                     94s
 
-$ minikube kubectl -- exec -it -n rook-ceph deploy/rook-ceph-tools -- ceph config show rgw.$GID | grep usage_log
-rgw_enable_usage_log        false
-```
+$ kubectl uncordon minikube-m02
 
-Deploy a new rook-config-override ConfigMap which sets `rgw_enable_usage_log` to `false`.
-
-```
-$ cat manifests/rook-config-override.yaml 
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: rook-config-override
-  namespace: rook-ceph
-data:
-  config: |
-    [global]
-    rgw_enable_usage_log = false
-
-$ minikube kubectl -- apply -f manifests/rook-config-override.yaml 
-Warning: resource configmaps/rook-config-override is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by kubectl apply. kubectl apply should only be used on resources created declaratively by either kubectl create --save-config or kubectl apply. The missing annotation will be patched automatically.
-configmap/rook-config-override configured
-
-$ minikube kubectl -- get cm -n rook-ceph rook-config-override -o yaml
-apiVersion: v1
-data:
-  config: |
-    [global]
-    rgw_enable_usage_log = false
-kind: ConfigMap
-
-... snip ...
-```
-
-Restart the Rook operator. `rgw_enable_usage_log` will revert to `true` after a while.
-
-```
-$ minikube kubectl -- rollout restart -n rook-ceph deploy/rook-ceph-operator
-deployment.apps/rook-ceph-operator restarted
-
-$ sleep 120
-
-$ minikube kubectl -- exec -it -n rook-ceph deploy/rook-ceph-tools -- ceph config show rgw.$GID | grep usage_log
-rgw_enable_usage_log        true                                           mon                                          
+$ kubectl get pdb -n rook-ceph
+NAME                              MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
+rook-ceph-mon-pdb                 N/A             1                 1                     14m
+rook-ceph-osd-host-minikube       N/A             0                 0                     2m42s
+rook-ceph-osd-host-minikube-m02   N/A             0                 0                     7s
+rook-ceph-osd-host-minikube-m03   N/A             0                 0                     2m42s
 ```
