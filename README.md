@@ -20,7 +20,7 @@ $ make minikube/start
 $ make minikube/setup-lvm
 $ make topolvm/deploy
 $ make -C rook build
-$ make rook/load-dev-image IMAGE=build-36a6140b/ceph-amd64 # <--------- The image name will be different in your environment
+$ make rook/load-dev-image IMAGE=build-dd170aa7/ceph-amd64
 $ make rook/deploy-cluster
 $ make rook/deploy-ceph-object-store
 ```

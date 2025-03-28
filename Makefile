@@ -61,8 +61,7 @@ topolvm/deploy:
 	$(KUBECTL) create namespace topolvm-system || true
 	$(KUBECTL) label namespace topolvm-system topolvm.io/webhook=ignore
 	$(KUBECTL) label namespace kube-system topolvm.io/webhook=ignore
-	helm install --namespace=topolvm-system topolvm topolvm/topolvm --values manifests/topolvm-values.yaml || true
-	$(KUBECTL) get pod -n topolvm-system -w
+	helm upgrade --install --namespace=topolvm-system topolvm topolvm/topolvm --values manifests/topolvm-values.yaml --wait
 
 ##@ Rook
 
