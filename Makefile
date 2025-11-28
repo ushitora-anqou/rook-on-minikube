@@ -19,7 +19,7 @@ help: ## Display this help.
 
 .PHONY: minikube/start
 minikube/start:
-	minikube start --driver=kvm2 --nodes 3 --cpus 4 --memory 8g --disk-size=30g
+	minikube start --driver=kvm2 --nodes 4 --cpus 4 --memory 8g --disk-size=30g
 
 .PHONY: minikube/stop
 minikube/stop:
@@ -36,6 +36,9 @@ minikube/setup-lvm:
 	minikube ssh -n minikube-m03 -- sudo truncate --size=20G backing_store
 	minikube ssh -n minikube-m03 -- sudo losetup -f backing_store
 	minikube ssh -n minikube-m03 -- sudo vgcreate myvg1 $$(minikube ssh -n minikube-m03 -- sudo losetup -j backing_store | cut -d':' -f1)
+	minikube ssh -n minikube-m04 -- sudo truncate --size=20G backing_store
+	minikube ssh -n minikube-m04 -- sudo losetup -f backing_store
+	minikube ssh -n minikube-m04 -- sudo vgcreate myvg1 $$(minikube ssh -n minikube-m04 -- sudo losetup -j backing_store | cut -d':' -f1)
 
 ##@ TopoLVM
 
@@ -56,6 +59,7 @@ rook/deploy-cluster:
 	$(KUBECTL) apply -f rook/deploy/examples/common.yaml
 	$(KUBECTL) apply -f rook/deploy/examples/crds.yaml
 	$(KUBECTL) apply -f rook/deploy/examples/operator.yaml
+	$(KUBECTL) apply -f rook/deploy/examples/csi-operator.yaml
 	$(KUBECTL) apply -f manifests/cluster.yaml
 	$(KUBECTL) apply -f rook/deploy/examples/toolbox.yaml
 	$(KUBECTL) get pod -n rook-ceph -w

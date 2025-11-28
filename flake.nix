@@ -17,8 +17,9 @@
     devShells."${system}".default = pkgs.mkShell {
       packages = with pkgs;
         [
-          minikube
+          kubectl
           kubernetes-helm
+          minikube
         ];
     };
   };
