@@ -81,3 +81,6 @@ spec:
   disruptionManagement:
     managePodBudgets: true
     osdMaintenanceTimeout: 1
+# cephConfig:
+#   mon:
+#     mon_osd_down_out_interval: "60"
