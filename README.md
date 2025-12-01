@@ -43,3 +43,11 @@ ID  CLASS  WEIGHT   TYPE NAME              STATUS  REWEIGHT  PRI-AFF
 ```
 $ kubectl drain --ignore-daemonsets --delete-emptydir-data minikube-m03
 ```
+
+```
+❯ kubectl get pdb -n rook-ceph                                     
+NAME                              MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
+rook-ceph-mon-pdb                 N/A             1                 0                     10m
+rook-ceph-osd-host-minikube       N/A             0                 0                     27s
+rook-ceph-osd-host-minikube-m02   N/A             0                 0                     27s
+```
