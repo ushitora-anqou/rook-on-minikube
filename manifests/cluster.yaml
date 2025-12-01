@@ -80,5 +80,4 @@ spec:
                 - ReadWriteOnce
   disruptionManagement:
     managePodBudgets: true
-    osdMaintenanceTimeout: 0
-    pgHealthCheckTimeout: 0
+    osdMaintenanceTimeout: 1
