@@ -1,6 +1,5 @@
 #################################################################################################################
-# Create an object store with settings for replication in a production environment. A minimum of 3 hosts with
-# OSDs are required in this example.
+# Create an object store without redundancy. Only a single OSD is required in this example.
 #  kubectl create -f object.yaml
 #################################################################################################################
 
@@ -14,10 +13,10 @@ spec:
   metadataPool:
     failureDomain: host
     replicated:
-      size: 3
+      size: 1
       # Disallow setting pool with replica 1, this could lead to data loss without recovery.
       # Make sure you're *ABSOLUTELY CERTAIN* that is what you want
-      requireSafeReplicaSize: true
+      requireSafeReplicaSize: false
     parameters:
       # Inline compression mode for the data pool
       # Further reference: https://docs.ceph.com/docs/master/rados/configuration/bluestore-config-ref/#inline-compression
@@ -29,10 +28,10 @@ spec:
   dataPool:
     failureDomain: host
     replicated:
-      size: 3
+      size: 1
       # Disallow setting pool with replica 1, this could lead to data loss without recovery.
       # Make sure you're *ABSOLUTELY CERTAIN* that is what you want
-      requireSafeReplicaSize: true
+      requireSafeReplicaSize: false
     parameters:
       # Inline compression mode for the data pool
       # Further reference: https://docs.ceph.com/docs/master/rados/configuration/bluestore-config-ref/#inline-compression

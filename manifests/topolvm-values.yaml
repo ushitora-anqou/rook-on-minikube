@@ -1,2 +1,4 @@
 cert-manager:
   enabled: true
+controller:
+  replicaCount: 1
